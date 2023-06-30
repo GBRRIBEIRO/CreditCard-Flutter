@@ -1,8 +1,11 @@
-import 'package:cardflip/cardW.dart';
+import 'package:cardflip/card_back.dart';
 import 'package:cardflip/data/flagsData.dart';
 import 'package:cardflip/models/flags.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_flip_card/flutter_flip_card.dart';
+
+import 'card_front.dart';
 
 void main() => runApp(MyApp());
 
@@ -30,16 +33,18 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  bool isFlipped = false;
-  String month = '';
-  String year = '';
+  String month = '0';
+  String year = '0';
   String cardName = 'Card Name';
-  String cardNumber = '';
-  String cvv = '';
+  String cardNumber = '0';
+  String cvv = '0';
   TextEditingController _cvvController = TextEditingController();
   TextEditingController _cardNumberController = TextEditingController();
   TextEditingController _monthController = TextEditingController();
   TextEditingController _yearController = TextEditingController();
+  TextEditingController _cardNameController = TextEditingController();
+
+  GestureFlipCardController _flipCardController = GestureFlipCardController();
 
   Image defaultImage = Image.asset(
     'assets/Transp.png',
@@ -65,6 +70,21 @@ class _MyHomePageState extends State<MyHomePage> {
                   Padding(
                     padding: const EdgeInsets.all(15.0),
                     child: TextField(
+                      maxLength: 30,
+                      decoration: const InputDecoration(
+                        hintText: 'Name',
+                      ),
+                      onChanged: (value) {
+                        setState(() {
+                          cardName = value;
+                        });
+                      },
+                      controller: _cardNameController,
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(15.0),
+                    child: TextField(
                       controller: _cardNumberController,
                       inputFormatters: [
                         FilteringTextInputFormatter.allow(
@@ -80,14 +100,11 @@ class _MyHomePageState extends State<MyHomePage> {
                         for (Flag flag in Flags) {
                           for (String init in flag.initials) {
                             if (value.startsWith(init)) {
-                              print('Entrou');
                               setState(() {
                                 cardLogo = flag.logoImage;
-                                cardName = flag.flagName;
                               });
                             } else if (value.isEmpty) {
                               setState(() {
-                                cardName = 'Card Name';
                                 cardLogo = defaultImage;
                               });
                             }
@@ -122,27 +139,27 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                   SizedBox(
                     child: Padding(
-                      padding: EdgeInsets.all(15.0),
+                      padding: const EdgeInsets.all(15.0),
                       child: Row(
                         children: [
                           const Text('Month: '),
                           SizedBox(
                             width: 50,
                             child: TextField(
+                                controller: _monthController,
                                 maxLength: 2,
                                 onChanged: (value) => setState(() {
                                       month = value;
-                                      _monthController.text = value;
                                     })),
                           ),
                           const Text('Year: '),
                           SizedBox(
                             width: 50,
                             child: TextField(
+                                controller: _yearController,
                                 maxLength: 2,
                                 onChanged: (value) => setState(() {
                                       year = value;
-                                      _yearController.text = value;
                                     })),
                           ),
                         ],
@@ -156,50 +173,43 @@ class _MyHomePageState extends State<MyHomePage> {
         });
     _cvvController.text = cvv;
     _cardNumberController.text = cardNumber;
+    _cardNameController.text = cardName;
+    _monthController.text = month;
+    _yearController.text = year;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        resizeToAvoidBottomInset: true,
-        body: Column(
-          children: [
-            CardWidget(
-              isFlipped: isFlipped,
-              cardLogo: cardLogo,
-              cardName: cardName,
-              cardNumber: cardNumber,
-              cvv: cvv,
-              month: month,
-              year: year,
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                FloatingActionButton(
-                    onPressed: () => setState(() {
-                          if (isFlipped == true) {
-                            isFlipped = false;
-                            return;
-                          }
-                          if (isFlipped == false) {
-                            isFlipped = true;
-                            return;
-                          }
-                        }),
-                    child: const Icon(
-                      Icons.refresh,
-                    )),
-                FloatingActionButton(
-                    onPressed: () {
-                      openModal(context);
-                    },
-                    child: const Icon(
-                      Icons.edit,
-                    )),
-              ],
-            ),
-          ],
-        ));
+        body: Padding(
+      padding: const EdgeInsets.fromLTRB(0, 20, 0, 0),
+      child: Column(
+        children: [
+          GestureFlipCard(
+              frontWidget: CardFront(
+                cardLogo: cardLogo,
+              ),
+              backWidget: CardBack(
+                cardName: cardName,
+                cardNumber: cardNumber,
+                cvv: cvv,
+                month: month,
+                year: year,
+              )),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              FloatingActionButton(
+                  onPressed: () {
+                    openModal(context);
+                  },
+                  child: const Icon(
+                    Icons.edit,
+                  )),
+            ],
+          ),
+        ],
+      ),
+    ));
   }
 }
